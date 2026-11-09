@@ -6,6 +6,9 @@
         <h1>Audit log</h1>
         <p class="dashboard-subtitle">Read-only history of account, invoice and payment activity.</p>
       </div>
+      <button class="button button-secondary" @click="navigateTo('Admin overview')">
+        ← Back to Dashboard
+      </button>
     </header>
 
     <section class="notice-box notice-neutral">
@@ -31,19 +34,19 @@
           <thead>
             <tr>
               <th>DATE & TIME</th>
-              <th>ACTOR</th>
+              <th>ACTOR TYPE</th>
               <th>ACTION</th>
-              <th>RECORD</th>
+              <th>RECORD REF</th>
               <th>TYPE</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="entry in filteredAuditLog" :key="entry.id">
               <td>{{ formatDate(entry.created_at, { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }}</td>
-              <td><strong>{{ entry.actor || '—' }}</strong></td>
+              <td><strong>{{ entry.actor_type || '—' }}</strong></td>
               <td>{{ entry.action }}</td>
-              <td>{{ entry.target || '—' }}</td>
-              <td><span class="tag-pill">{{ entry.type }}</span></td>
+              <td>{{ entry.record_ref || '—' }}</td>
+              <td><span class="tag-pill">{{ entry.record_type }}</span></td>
             </tr>
           </tbody>
         </table>
@@ -72,10 +75,14 @@ const auditLog = ref([])
 const loading = ref(true)
 const searchTerm = ref('')
 
+const navigateTo = (page) => {
+  emit('navigate', page)
+}
+
 const filteredAuditLog = computed(() => {
   const term = searchTerm.value.toLowerCase()
   return auditLog.value.filter(entry => {
-    return `${entry.actor} ${entry.action} ${entry.target} ${entry.type}`.toLowerCase().includes(term)
+    return `${entry.actor_type} ${entry.action} ${entry.record_ref} ${entry.record_type}`.toLowerCase().includes(term)
   })
 })
 

@@ -237,7 +237,16 @@ export function useApi() {
   // Users (Admin)
   const getUsers = async () => {
     const response = await apiCall('/admin/users')
-    return response.data || []
+    // Backend returns direct array, not wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response.data || [])
+  }
+
+  const createUser = async (userData) => {
+    const response = await apiCall('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(userData)
+    })
+    return response.data
   }
 
   const getUserById = async (userId) => {
@@ -246,8 +255,8 @@ export function useApi() {
   }
 
   const updateUser = async (userId, userData) => {
-    const response = await apiCall(`/admin/users/${userId}`, {
-      method: 'PUT',
+    const response = await apiCall(`/admin/users/${userId}/access`, {
+      method: 'PATCH',
       body: JSON.stringify(userData)
     })
     return response.data
@@ -257,6 +266,7 @@ export function useApi() {
   const getAuditLogs = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString()
     const response = await apiCall(`/admin/audit-logs${queryString ? `?${queryString}` : ''}`)
+    // Backend returns { data, page, page_size, total }
     return response.data || []
   }
 

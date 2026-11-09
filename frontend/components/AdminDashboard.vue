@@ -43,8 +43,48 @@
         <button class="button button-secondary" @click="navigateTo('Audit Log')">
           View audit log
         </button>
+        <button class="button button-primary" @click="showInviteModal = true">
+          Invite new user
+        </button>
       </div>
     </section>
+
+    <!-- Invite User Modal -->
+    <div v-if="showInviteModal" class="modal-overlay" @click.self="showInviteModal = false">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Invite New User</h2>
+          <button class="icon-button" @click="showInviteModal = false">×</button>
+        </div>
+        <div class="modal-body">
+          <label>
+            Full name
+            <input v-model="inviteForm.full_name" type="text" placeholder="Enter full name" required>
+          </label>
+          <label>
+            Email
+            <input v-model="inviteForm.email" type="email" placeholder="Enter email address" required>
+          </label>
+          <label>
+            Role
+            <select v-model="inviteForm.role" required>
+              <option value="">Select role</option>
+              <option value="student">Student</option>
+              <option value="finance">Finance</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </label>
+          <label>
+            Password
+            <input v-model="inviteForm.password" type="password" placeholder="Enter password (min 8 characters)" required minlength="8">
+          </label>
+          <div class="modal-actions">
+            <button class="button button-secondary" @click="showInviteModal = false">Cancel</button>
+            <button class="button button-primary" @click="inviteUser" :disabled="!isInviteFormValid">Send Invite</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -68,12 +108,47 @@ const users = ref([])
 const auditLog = ref([])
 const loading = ref(true)
 
+const showInviteModal = ref(false)
+const inviteForm = ref({
+  full_name: '',
+  email: '',
+  role: '',
+  password: ''
+})
+
+const isInviteFormValid = computed(() => {
+  return inviteForm.value.full_name.trim() &&
+         inviteForm.value.email.trim() &&
+         inviteForm.value.role &&
+         inviteForm.value.password.length >= 8
+})
+
 const activeUsers = computed(() => {
-  return users.value.filter(user => user.status === 'Active').length
+  return users.value.filter(user => user.access_status === 'active').length
 })
 
 const navigateTo = (page) => {
   emit('navigate', page)
+}
+
+const inviteUser = async () => {
+  try {
+    await api.createUser(inviteForm.value)
+    showInviteModal.value = false
+    // Reset form
+    inviteForm.value = {
+      full_name: '',
+      email: '',
+      role: '',
+      password: ''
+    }
+    alert('User invited successfully')
+    // Reload users to update metrics
+    await loadData()
+  } catch (error) {
+    console.error('Failed to invite user:', error)
+    alert('Failed to invite user: ' + error.message)
+  }
 }
 
 const loadData = async () => {
@@ -96,3 +171,85 @@ onMounted(() => {
   loadData()
 })
 </script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body label {
+  display: block;
+  margin-bottom: 15px;
+}
+
+.modal-body input,
+.modal-body select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.icon-button:hover {
+  background: #f3f4f6;
+}
+</style>
