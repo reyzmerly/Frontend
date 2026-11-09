@@ -179,12 +179,6 @@ export function useApi() {
     return response.data
   }
 
-  const deleteFeeType = async (feeTypeId) => {
-    await apiCall(`/fee-types/${feeTypeId}`, {
-      method: 'DELETE'
-    })
-  }
-
   // Students
   const getStudents = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString()
@@ -309,7 +303,6 @@ export function useApi() {
     getFeeTypes,
     createFeeType,
     updateFeeType,
-    deleteFeeType,
     getStudents,
     getAccountsReport,
     getReportSummary,

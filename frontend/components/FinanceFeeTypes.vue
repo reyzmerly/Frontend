@@ -21,17 +21,30 @@
           <input v-model="createForm.name" placeholder="e.g. Laboratory fees" required>
         </label>
         <label>
-          Category
-          <select v-model="createForm.category" required>
-            <option>Academic</option>
-            <option>Administrative</option>
-            <option>Facilities</option>
-            <option>Campus</option>
+          Programme
+          <select v-model="createForm.programme_id" required>
+            <option value="">Select programme</option>
+            <option v-for="programme in programmes" :key="programme.id" :value="programme.id">
+              {{ programme.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Semester
+          <select v-model="createForm.semester_id" required>
+            <option value="">Select semester</option>
+            <option v-for="semester in semesters" :key="semester.id" :value="semester.id">
+              {{ semester.name }}
+            </option>
           </select>
         </label>
         <label>
           Default amount (RWF)
           <input v-model.number="createForm.amount" type="number" min="1" required>
+        </label>
+        <label>
+          Effective from
+          <input v-model="createForm.effective_from" type="date" required>
         </label>
         <div class="form-actions">
           <button class="button button-primary" type="submit">Add fee type</button>
@@ -51,33 +64,25 @@
           <thead>
             <tr>
               <th>FEE TYPE</th>
-              <th>CATEGORY</th>
+              <th>PROGRAMME</th>
+              <th>SEMESTER</th>
               <th>DEFAULT AMOUNT</th>
-              <th>STATUS</th>
-              <th>ACTION</th>
+              <th>EFFECTIVE FROM</th>
             </tr>
           </thead>
           <tbody>
+            <tr v-if="feeTypes.length === 0">
+              <td colspan="5" class="empty-state">No fee types found.</td>
+            </tr>
             <tr v-for="fee in feeTypes" :key="fee.id">
               <td>
                 <strong>{{ fee.name }}</strong>
                 <small>{{ fee.id }}</small>
               </td>
-              <td>{{ fee.category }}</td>
+              <td>{{ fee.programme_name || '—' }}</td>
+              <td>{{ fee.semester_name || '—' }}</td>
               <td>{{ formatRWF(fee.amount) }}</td>
-              <td>
-                <span :class="['status-pill', fee.active ? 'status-paid' : 'status-overdue']">
-                  {{ fee.active ? 'Active' : 'Inactive' }}
-                </span>
-              </td>
-              <td>
-                <button
-                  class="button button-quiet button-small"
-                  @click="toggleFeeType(fee)"
-                >
-                  {{ fee.active ? 'Deactivate' : 'Activate' }}
-                </button>
-              </td>
+              <td>{{ formatDate(fee.effective_from) }}</td>
             </tr>
           </tbody>
         </table>
@@ -90,7 +95,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useApi, formatRWF } from '~/composables/useApi'
+import { useApi, formatRWF, formatDate } from '~/composables/useApi'
 
 const props = defineProps({
   user: Object,
@@ -104,21 +109,26 @@ const emit = defineEmits(['navigate'])
 
 const api = useApi()
 const feeTypes = ref([])
+const programmes = ref([])
+const semesters = ref([])
 const loading = ref(true)
 
 const createForm = ref({
   name: '',
-  category: 'Academic',
-  amount: 0
+  programme_id: '',
+  semester_id: '',
+  amount: 0,
+  effective_from: ''
 })
 
 const handleCreateFeeType = async () => {
   try {
     const feeTypeData = {
       name: createForm.value.name,
-      category: createForm.value.category,
+      programme_id: createForm.value.programme_id,
+      semester_id: createForm.value.semester_id,
       amount: createForm.value.amount,
-      active: true
+      effective_from: createForm.value.effective_from
     }
 
     await api.createFeeType(feeTypeData)
@@ -126,8 +136,10 @@ const handleCreateFeeType = async () => {
     // Reset form
     createForm.value = {
       name: '',
-      category: 'Academic',
-      amount: 0
+      programme_id: '',
+      semester_id: '',
+      amount: 0,
+      effective_from: ''
     }
 
     // Reload fee types
@@ -135,23 +147,6 @@ const handleCreateFeeType = async () => {
   } catch (error) {
     console.error('Failed to create fee type:', error)
     alert('Failed to create fee type: ' + error.message)
-  }
-}
-
-const toggleFeeType = async (fee) => {
-  try {
-    const updatedData = {
-      ...fee,
-      active: !fee.active
-    }
-
-    await api.updateFeeType(fee.id, updatedData)
-
-    // Reload fee types
-    await loadFeeTypes()
-  } catch (error) {
-    console.error('Failed to toggle fee type:', error)
-    alert('Failed to update fee type: ' + error.message)
   }
 }
 
@@ -163,7 +158,17 @@ const loadFeeTypes = async () => {
   }
 }
 
+const loadProgrammesAndSemesters = async () => {
+  try {
+    programmes.value = await api.getProgrammes()
+    semesters.value = await api.getSemesters()
+  } catch (error) {
+    console.error('Failed to load programmes and semesters:', error)
+  }
+}
+
 onMounted(() => {
   loadFeeTypes()
+  loadProgrammesAndSemesters()
 })
 </script>
