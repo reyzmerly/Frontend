@@ -102,7 +102,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useApi } from '~/composables/useApi'
@@ -188,6 +187,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.action-grid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;

@@ -285,7 +285,7 @@ body {
 }
 
 .logout-button {
-    margin-top: auto;
+    margin-top: 20px;
     background: transparent;
     border: none;
     color: #ead9de;

@@ -234,7 +234,7 @@ const navigationPages = computed(() => {
   } else if (role === 'finance') {
     return ['Dashboard', 'Manage Invoices', 'Fee Types', 'Payments monitor', 'Financial Reports', 'Programmes', 'Semesters']
   } else if (role === 'admin') {
-    return ['Roles and access', 'Audit Log']
+    return ['Dashboard', 'Roles and access', 'Audit Log']
   }
   return []
 })
