@@ -104,8 +104,12 @@ const navigateToInvoices = () => {
 
 const handleSubmit = async () => {
   try {
-    console.log('Submitting payment with data:', paymentForm.value)
+    console.log('=== Payment Submission Started ===')
     console.log('Invoice:', invoice.value)
+    console.log('Invoice status:', invoice.value.status)
+    console.log('Invoice balance:', invoice.value.balance)
+    console.log('Invoice total_amount:', invoice.value.total_amount)
+    console.log('Invoice paid_amount:', invoice.value.paid_amount)
     
     const paymentData = {
       invoice_id: invoice.value.id,
@@ -113,15 +117,16 @@ const handleSubmit = async () => {
       phone: paymentForm.value.phone
     }
     
-    console.log('Sending payment request:', paymentData)
+    console.log('Payment data:', paymentData)
+    console.log('Sending payment request to backend...')
+    
     const response = await api.createPayment(paymentData)
     console.log('Payment initiation response:', response)
     
     // Backend returns 202 Accepted with empty body
-    // We need to fetch the latest payment for this invoice
     console.log('Fetching payments list to find new payment')
     const payments = await api.getPayments()
-    console.log('Payments list:', payments)
+    console.log('Payments list length:', payments.length)
     
     // Find the most recent payment for this invoice
     const invoicePayments = payments.filter(p => p.invoice_id === invoice.value.id)
@@ -142,7 +147,10 @@ const handleSubmit = async () => {
       emit('navigate', 'Payment History')
     }
   } catch (error) {
-    console.error('Payment failed:', error)
+    console.error('=== Payment Failed ===')
+    console.error('Error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error details:', JSON.stringify(error, null, 2))
     alert('Payment failed: ' + error.message)
   }
 }
