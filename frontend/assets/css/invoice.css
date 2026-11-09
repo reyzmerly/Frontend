@@ -1,0 +1,45 @@
+/* Student invoice, checkout and receipt views */
+.payment-layout { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, .8fr); gap: 18px; align-items: start; }
+.payment-form-card .section-heading { align-items: flex-start; }
+.invoice-recap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px; border: 1px solid #edf0f3; border-radius: 10px; background: #fafbfc; margin: 20px 0; }
+.invoice-recap span, .invoice-recap strong, .payment-summary div span, .payment-summary div strong, .receipt-grid span, .receipt-grid strong { display: block; }
+.invoice-recap span, .payment-summary div span, .receipt-grid span { color: #84919e; font-size: 9px; }
+.invoice-recap strong { margin-top: 6px; color: #27394b; font-size: 10px; line-height: 1.4; }
+.stacked-form { display: grid; gap: 11px; }
+.stacked-form input { width: 100%; }
+.stacked-form label span { color: #8b97a4; font-weight: 400; }
+.field-hint { color: #7d8996; font-size: 9px; margin-top: -6px; }
+.payment-summary { position: sticky; top: 90px; }
+.payment-summary h2 { margin: 12px 0 5px; color: #70243b; font: 800 24px "Manrope", sans-serif; }
+.payment-summary > p:not(.dashboard-eyebrow) { color: #718096; font-size: 10px; }
+.payment-summary hr { margin: 20px 0 14px; border: 0; border-top: 1px solid #edf0f3; }
+.payment-summary div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; }
+.payment-summary div strong { color: #405366; font-size: 10px; text-align: right; }
+.status-panel { max-width: 720px; margin: 40px auto; padding: 38px; border: 1px solid #e6e9ed; border-radius: 16px; background: #fff; text-align: center; box-shadow: 0 8px 30px #172b3d0a; }
+.status-orb { width: 54px; height: 54px; display: grid; place-items: center; margin: 0 auto 17px; border-radius: 50%; background: #fff4dc; color: #94600e; font-size: 24px; font-weight: 700; }
+.status-panel-success .status-orb { color: #176f4c; background: #e8f6ee; }
+.status-panel-error .status-orb { color: #a63e3e; background: #fff0ef; }
+.status-panel h2 { margin: 18px 0 6px; color: #243648; font: 800 27px "Manrope", sans-serif; }
+.status-panel > p { color: #718096; font-size: 11px; line-height: 1.6; }
+.reference-card { display: grid; gap: 6px; max-width: 320px; margin: 22px auto; padding: 14px; border: 1px dashed #dedfe3; border-radius: 9px; background: #fbfbfc; }
+.reference-card span { color: #83909d; font-size: 9px; }
+.reference-card strong { color: #3d5062; font-size: 12px; }
+.demo-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 9px; margin-top: 24px; }
+.demo-actions p { width: 100%; color: #8b6a24; font-size: 10px; }
+.demo-actions .text-action { padding: 10px; border: 0; background: transparent; cursor: pointer; }
+.status-panel .panel-footnote { margin-top: 25px; }
+.receipt-card { margin-bottom: 20px; padding: 25px; border: 1px solid #e1e9e4; border-radius: 14px; background: linear-gradient(135deg, #fff, #f8fcf9); }
+.receipt-top { display: flex; justify-content: space-between; align-items: center; }
+.receipt-card h2 { margin-top: 24px; color: #25384a; font: 800 22px "Manrope", sans-serif; }
+.receipt-amount { margin: 8px 0 20px; color: #70243b; font: 800 28px "Manrope", sans-serif; }
+.receipt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 22px; }
+.receipt-grid strong { margin-top: 5px; color: #33475a; font-size: 11px; overflow-wrap: anywhere; }
+.receipt-actions { display: flex; gap: 10px; margin-top: 20px; }
+.receipt-actions .button { flex: 1; }
+.receipt-card .button { margin-top: 3px; }
+@media print {
+	body * { visibility: hidden !important; }
+	.receipt-card, .receipt-card * { visibility: visible !important; }
+	.receipt-card { position: absolute; inset: 20px; border: 0; box-shadow: none; }
+	.receipt-card .button, .receipt-actions { display: none !important; }
+}

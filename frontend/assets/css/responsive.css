@@ -1,0 +1,112 @@
+
+@media (max-width: 1050px) {
+
+    .sidebar { width: 220px; }
+    .workspace { margin-left: 220px; }
+    .page-content { padding: 24px; }
+    .metric-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dashboard-grid-two { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 800px) {
+
+    .login-container {
+        grid-template-columns: 1fr;
+    }
+
+    .login-brand {
+        padding: 45px 30px;
+    }
+
+    .login-brand h1 {
+        font-size: 30px;
+    }
+
+    .login-benefits {
+        margin-top: 25px;
+    }
+
+    .login-form-section {
+        padding: 45px 25px 70px;
+    }
+
+    .login-footer {
+        position: static;
+        margin-top: 35px;
+    }
+
+    .metric-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .page-heading { align-items: flex-start; }
+    .toolbar { align-items: flex-start; flex-direction: column; }
+    .toolbar-controls { width: 100%; }
+    .toolbar input { flex: 1; width: auto; }
+
+    .sidebar {
+        width: 210px;
+    }
+
+    .workspace {
+        margin-left: 210px;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .login-container {
+        display: block;
+    }
+
+    .login-brand {
+        padding: 35px 25px;
+    }
+
+    .login-brand h1 {
+        font-size: 27px;
+    }
+
+    .login-benefits {
+        display: none;
+    }
+
+    .sidebar {
+        position: static;
+        width: 100%;
+        min-height: auto;
+        padding: 16px;
+    }
+
+    .sidebar-brand { padding-bottom: 14px; }
+    .sidebar-label { margin: 15px 4px 8px; }
+    #navigation-menu { display: flex; flex-wrap: wrap; gap: 5px; }
+    .nav-link { padding: 9px 10px; font-size: 10px; }
+    .logout-button { margin: 8px 0 0; padding: 8px 10px; }
+
+    .workspace {
+        margin-left: 0;
+    }
+
+    .topbar {
+        padding: 0 18px;
+    }
+
+    .page-content {
+        padding: 18px 14px;
+    }
+
+    .success-toast { margin: 14px 14px 0; }
+
+    .page-heading { display: block; margin-bottom: 18px; }
+    .page-heading-action { margin-top: 14px; }
+    .metric-grid-3, .metric-grid-4 { grid-template-columns: 1fr; }
+    .metric-card { padding: 16px; }
+    .panel-card { padding: 16px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .form-actions { align-items: center; flex-wrap: wrap; }
+    .payment-layout { grid-template-columns: 1fr; }
+    .payment-summary { position: static; }
+    .invoice-recap { grid-template-columns: 1fr; }
+    .status-panel { padding: 26px 18px; margin: 20px auto; }
+    .receipt-grid { grid-template-columns: 1fr; }
+    .topbar { height: 62px; }
+    .user-profile strong, .user-profile small { font-size: 10px; }
+}
