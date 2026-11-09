@@ -99,16 +99,16 @@
             </tr>
             <tr v-for="invoice in filteredInvoices" :key="invoice.id">
               <td>
-                <strong>{{ invoice.id }}</strong>
+                <strong>{{ invoice.invoice_number || invoice.id }}</strong>
                 <small>Issued {{ formatDate(invoice.created_at) }}</small>
               </td>
               <td>
-                <strong>{{ invoice.student_name || '—' }}</strong>
-                <small>{{ invoice.student_number || '—' }}</small>
+                <strong>{{ invoice.student?.full_name || invoice.student_name || '—' }}</strong>
+                <small>{{ invoice.student?.student_number || invoice.student_id || '—' }}</small>
               </td>
               <td>{{ invoice.description }}</td>
               <td>{{ formatRWF(invoice.total_amount) }}</td>
-              <td><strong>{{ formatRWF(invoice.total_amount - invoice.paid_amount) }}</strong></td>
+              <td><strong>{{ formatRWF(invoice.balance || (invoice.total_amount - invoice.paid_amount)) }}</strong></td>
               <td>{{ formatDate(invoice.due_date) }}</td>
               <td v-html="statusBadge(invoice.status)"></td>
             </tr>
@@ -162,7 +162,11 @@ const filteredInvoices = computed(() => {
   const status = statusFilter.value
 
   return invoices.value.filter(invoice => {
-    const matchesSearch = `${invoice.id} ${invoice.student_name} ${invoice.student_number} ${invoice.description}`.toLowerCase().includes(term)
+    const studentName = invoice.student?.full_name || invoice.student_name || ''
+    const studentNumber = invoice.student?.student_number || invoice.student_id || ''
+    const invoiceNum = invoice.invoice_number || invoice.id || ''
+    
+    const matchesSearch = `${invoiceNum} ${studentName} ${studentNumber} ${invoice.description}`.toLowerCase().includes(term)
     const matchesStatus = !status || invoice.status === status
     return matchesSearch && matchesStatus
   })

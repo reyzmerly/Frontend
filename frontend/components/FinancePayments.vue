@@ -76,11 +76,11 @@
                 <small>{{ formatTime(payment.created_at) }}</small>
               </td>
               <td>
-                <strong>{{ payment.student_name || '—' }}</strong>
-                <small>{{ payment.student_id || '—' }}</small>
+                <strong>{{ payment.student?.full_name || payment.student_name || '—' }}</strong>
+                <small>{{ payment.student?.student_number || payment.student_id || '—' }}</small>
               </td>
-              <td>{{ payment.invoice_id }}</td>
-              <td>{{ payment.provider_ref || '—' }}</td>
+              <td>{{ payment.invoice_number || payment.invoice_id }}</td>
+              <td>{{ payment.mopay_reference || payment.provider_ref || '—' }}</td>
               <td>{{ formatRWF(payment.amount) }}</td>
               <td v-html="statusBadge(payment.status)"></td>
               <td>
@@ -88,13 +88,8 @@
                   class="button button-quiet button-small"
                   @click="addNote(payment)"
                 >
-                  {{ payment.note ? 'Edit note' : 'Add note' }}
+                  Add note
                 </button>
-              </td>
-            </tr>
-            <tr v-if="payment.note" class="note-row">
-              <td colspan="7">
-                <strong>Follow-up:</strong> {{ payment.note }}
               </td>
             </tr>
           </tbody>
@@ -148,7 +143,12 @@ const filteredPayments = computed(() => {
   const status = statusFilter.value
 
   return payments.value.filter(payment => {
-    const matchesSearch = `${payment.student_name} ${payment.student_id} ${payment.invoice_id} ${payment.provider_ref}`.toLowerCase().includes(search)
+    const studentName = payment.student?.full_name || payment.student_name || ''
+    const studentNumber = payment.student?.student_number || payment.student_id || ''
+    const invoiceNum = payment.invoice_number || payment.invoice_id || ''
+    const ref = payment.mopay_reference || payment.provider_ref || ''
+    
+    const matchesSearch = `${studentName} ${studentNumber} ${invoiceNum} ${ref}`.toLowerCase().includes(search)
     const matchesStatus = !status || payment.status === status
     return matchesSearch && matchesStatus
   })
@@ -159,14 +159,17 @@ const formatTime = (dateString) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
-const addNote = (payment) => {
-  const note = window.prompt('Add a follow-up note. This does not change the payment status:', payment.note || '')
-  if (note === null) return
+const addNote = async (payment) => {
+  const note = window.prompt('Add a follow-up note:', '')
+  if (note === null || !note.trim()) return
 
-  // In a real app, you would call an API to update the note
-  payment.note = note.trim()
-  // Reload payments
-  loadPayments()
+  try {
+    await api.createPaymentNote(payment.id, note.trim())
+    alert('Note added successfully')
+  } catch (error) {
+    console.error('Failed to add note:', error)
+    alert('Failed to add note: ' + error.message)
+  }
 }
 
 const loadPayments = async () => {

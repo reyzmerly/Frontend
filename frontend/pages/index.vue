@@ -156,6 +156,16 @@
               <FinanceReports :user="user" :current-page="currentPage" @navigate="handleNavigate" />
             </ClientOnly>
           </div>
+          <div v-else-if="currentPage === 'Programmes' && user.role === 'finance'">
+            <ClientOnly>
+              <FinanceProgrammes :user="user" :current-page="currentPage" @navigate="handleNavigate" />
+            </ClientOnly>
+          </div>
+          <div v-else-if="currentPage === 'Semesters' && user.role === 'finance'">
+            <ClientOnly>
+              <FinanceSemesters :user="user" :current-page="currentPage" @navigate="handleNavigate" />
+            </ClientOnly>
+          </div>
           <div v-else-if="currentPage === 'Roles and access' && user.role === 'admin'">
             <ClientOnly>
               <AdminUsers :user="user" :current-page="currentPage" @navigate="handleNavigate" />
@@ -208,7 +218,7 @@ const navigationPages = computed(() => {
   if (role === 'student') {
     return ['Dashboard', 'My Invoices', 'Payment History']
   } else if (role === 'finance') {
-    return ['Dashboard', 'Manage Invoices', 'Fee Types', 'Payments monitor', 'Financial Reports']
+    return ['Dashboard', 'Manage Invoices', 'Fee Types', 'Payments monitor', 'Financial Reports', 'Programmes', 'Semesters']
   } else if (role === 'admin') {
     return ['Roles and access', 'Audit Log']
   }

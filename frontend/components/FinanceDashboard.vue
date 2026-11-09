@@ -96,11 +96,11 @@
           <tbody>
             <tr v-for="payment in recentPayments" :key="payment.id">
               <td>
-                <strong>{{ payment.student_name || '—' }}</strong>
-                <small>{{ payment.student_id || '—' }}</small>
+                <strong>{{ payment.student?.full_name || payment.student_name || '—' }}</strong>
+                <small>{{ payment.student?.student_number || payment.student_id || '—' }}</small>
               </td>
-              <td>{{ payment.invoice_id }}</td>
-              <td>{{ payment.provider_ref || '—' }}</td>
+              <td>{{ payment.invoice_number || payment.invoice_id }}</td>
+              <td>{{ payment.mopay_reference || payment.provider_ref || '—' }}</td>
               <td>{{ formatDate(payment.created_at) }}</td>
               <td>{{ formatRWF(payment.amount) }}</td>
               <td v-html="statusBadge(payment.status)"></td>
@@ -147,7 +147,7 @@ const collected = computed(() => {
 })
 
 const outstanding = computed(() => {
-  return invoices.value.reduce((sum, invoice) => sum + invoice.total_amount - invoice.paid_amount, 0)
+  return invoices.value.reduce((sum, invoice) => sum + (invoice.balance || 0), 0)
 })
 
 const outstandingCount = computed(() => {

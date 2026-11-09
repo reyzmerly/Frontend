@@ -91,9 +91,9 @@
           <tbody>
             <tr v-for="payment in paid" :key="payment.id">
               <td>{{ formatDate(payment.created_at) }}</td>
-              <td>{{ payment.student_name || '—' }}</td>
-              <td>{{ payment.invoice_id }}</td>
-              <td>{{ payment.provider_ref || '—' }}</td>
+              <td>{{ payment.student?.full_name || payment.student_name || '—' }}</td>
+              <td>{{ payment.invoice_number || payment.invoice_id }}</td>
+              <td>{{ payment.mopay_reference || payment.provider_ref || '—' }}</td>
               <td>{{ formatRWF(payment.amount) }}</td>
               <td v-html="statusBadge(payment.status)"></td>
             </tr>
@@ -139,13 +139,18 @@ const totalInvoiced = computed(() => {
 })
 
 const outstanding = computed(() => {
-  return invoices.value.reduce((sum, invoice) => sum + invoice.total_amount - invoice.paid_amount, 0)
+  return invoices.value.reduce((sum, invoice) => sum + (invoice.balance || 0), 0)
 })
 
 const collectionByFee = computed(() => {
-  return invoices.value.reduce((summary, invoice) => {
-    const category = invoice.description.split('—')[0].trim()
-    summary[category] = (summary[category] || 0) + invoice.paid_amount
+  // Group paid payments by invoice description
+  return paid.value.reduce((summary, payment) => {
+    // Find the invoice for this payment
+    const invoice = invoices.value.find(inv => inv.id === payment.invoice_id)
+    if (invoice) {
+      const category = invoice.description.split('—')[0].trim()
+      summary[category] = (summary[category] || 0) + payment.amount
+    }
     return summary
   }, {})
 })

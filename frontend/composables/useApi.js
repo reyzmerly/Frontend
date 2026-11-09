@@ -147,10 +147,19 @@ export function useApi() {
     })
   }
 
+  const createPaymentNote = async (paymentId, note) => {
+    const response = await apiCall(`/payments/${paymentId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify({ note })
+    })
+    return response.data || response
+  }
+
   // Fee Types
   const getFeeTypes = async () => {
     const response = await apiCall('/fee-types')
-    return response.data || []
+    // Backend returns direct array, not wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response.data || [])
   }
 
   const createFeeType = async (feeTypeData) => {
@@ -179,7 +188,8 @@ export function useApi() {
   const getStudents = async (params = {}) => {
     const queryString = new URLSearchParams(params).toString()
     const response = await apiCall(`/finance/students${queryString ? `?${queryString}` : ''}`)
-    return response.data || []
+    // Backend returns direct array, not wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response.data || [])
   }
 
   // Finance Reports
@@ -217,13 +227,15 @@ export function useApi() {
   // Finance Programmes
   const getProgrammes = async () => {
     const response = await apiCall('/finance/programmes')
-    return response.data || []
+    // Backend returns direct array, not wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response.data || [])
   }
 
   // Finance Semesters
   const getSemesters = async () => {
     const response = await apiCall('/finance/semesters')
-    return response.data || []
+    // Backend returns direct array, not wrapped in { data: ... }
+    return Array.isArray(response) ? response : (response.data || [])
   }
 
   // Users (Admin)
@@ -292,6 +304,7 @@ export function useApi() {
     getPaymentById,
     createPayment,
     cancelPayment,
+    createPaymentNote,
     getFeeTypes,
     createFeeType,
     updateFeeType,
