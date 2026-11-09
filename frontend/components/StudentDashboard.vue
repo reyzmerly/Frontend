@@ -156,7 +156,7 @@ const getInvoiceDescription = (invoiceId) => {
 
 const initiatePayment = (invoice) => {
   // Navigate to payment page with invoice ID
-  props.currentPage.value = 'Payment'
+  emit('navigate', 'Payment')
   // Store selected invoice
   localStorage.setItem('selectedInvoice', JSON.stringify(invoice))
 }

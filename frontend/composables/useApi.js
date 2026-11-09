@@ -36,7 +36,20 @@ export function useApi() {
       throw new Error(error.message || error.code || 'Request failed')
     }
 
-    return response.json()
+    // Handle response body - 202 Accepted might have empty body
+    const text = await response.text()
+    
+    if (!text || text.trim() === '') {
+      console.log('Empty response body (likely 202 Accepted)')
+      return { status: response.status, empty: true }
+    }
+    
+    try {
+      return JSON.parse(text)
+    } catch (e) {
+      console.error('JSON parse error:', e)
+      throw new Error('Invalid JSON response from server')
+    }
   }
 
   // Authentication
@@ -109,15 +122,23 @@ export function useApi() {
 
   const getPaymentById = async (paymentId) => {
     const response = await apiCall(`/payments/${paymentId}`)
-    return response.data
+    // Single object endpoints return data directly, not wrapped in { data: ... }
+    return response.data || response
   }
 
   const createPayment = async (paymentData) => {
-    const response = await apiCall('/payments', {
+    const response = await apiCall(`/invoices/${paymentData.invoice_id}/payments`, {
       method: 'POST',
-      body: JSON.stringify(paymentData)
+      body: JSON.stringify({
+        amount: paymentData.amount,
+        mobile_number: paymentData.phone
+      })
     })
-    return response.data
+    // Handle 202 Accepted response with payment data
+    if (!response || Object.keys(response).length === 0) {
+      return { success: true }
+    }
+    return response.data || response
   }
 
   const cancelPayment = async (paymentId) => {

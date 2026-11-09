@@ -23,7 +23,7 @@
           <span class="secure-note">● MoPay protected</span>
         </div>
         <div class="invoice-recap">
-          <div><span>Invoice</span><strong>{{ invoice.id }}</strong></div>
+          <div><span>Invoice</span><strong>{{ invoice.invoice_number || invoice.id }}</strong></div>
           <div><span>Description</span><strong>{{ invoice.description }}</strong></div>
           <div><span>Outstanding balance</span><strong>{{ formatRWF(balance) }}</strong></div>
         </div>
@@ -95,7 +95,7 @@ const paymentForm = ref({
 
 const balance = computed(() => {
   if (!invoice.value) return 0
-  return invoice.value.total_amount - invoice.value.paid_amount
+  return invoice.value.balance || (invoice.value.total_amount - invoice.value.paid_amount)
 })
 
 const navigateToInvoices = () => {
@@ -104,17 +104,43 @@ const navigateToInvoices = () => {
 
 const handleSubmit = async () => {
   try {
+    console.log('Submitting payment with data:', paymentForm.value)
+    console.log('Invoice:', invoice.value)
+    
     const paymentData = {
       invoice_id: invoice.value.id,
-      amount: paymentForm.value.amount,
+      amount: Math.floor(paymentForm.value.amount),
       phone: paymentForm.value.phone
     }
-
-    const payment = await api.createPayment(paymentData)
-
-    // Navigate to payment status page
-    emit('navigate', 'Payment Status')
-    localStorage.setItem('currentPayment', JSON.stringify(payment))
+    
+    console.log('Sending payment request:', paymentData)
+    const response = await api.createPayment(paymentData)
+    console.log('Payment initiation response:', response)
+    
+    // Backend returns 202 Accepted with empty body
+    // We need to fetch the latest payment for this invoice
+    console.log('Fetching payments list to find new payment')
+    const payments = await api.getPayments()
+    console.log('Payments list:', payments)
+    
+    // Find the most recent payment for this invoice
+    const invoicePayments = payments.filter(p => p.invoice_id === invoice.value.id)
+    console.log('Payments for this invoice:', invoicePayments)
+    
+    // Sort by created_at descending to get the latest
+    const latestPayment = invoicePayments.sort((a, b) => 
+      new Date(b.created_at) - new Date(a.created_at)
+    )[0]
+    
+    console.log('Latest payment:', latestPayment)
+    
+    if (latestPayment) {
+      emit('navigate', 'Payment Status')
+      localStorage.setItem('currentPayment', JSON.stringify(latestPayment))
+    } else {
+      alert('Payment initiated but could not retrieve payment details. Please check payment history.')
+      emit('navigate', 'Payment History')
+    }
   } catch (error) {
     console.error('Payment failed:', error)
     alert('Payment failed: ' + error.message)

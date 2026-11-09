@@ -15,13 +15,12 @@
       <p>{{ statusMessage }}</p>
       <div class="reference-card">
         <span>MoPay reference</span>
-        <strong>{{ payment.provider_ref || '—' }}</strong>
+        <strong>{{ payment.mopay_reference || payment.provider_ref || '—' }}</strong>
       </div>
 
       <div v-if="payment.status === 'Pending'" class="demo-actions">
-        <p>Demo preview — no real payment will be sent.</p>
-        <button class="button button-primary" @click="simulatePaid">Simulate MoPay success</button>
-        <button class="button button-secondary" @click="simulateFailed">Simulate failed payment</button>
+        <p v-if="isLoading">Checking payment status…</p>
+        <p v-else>Waiting for MoPay confirmation on your phone…</p>
         <button class="text-action" @click="cancelPayment">Cancel payment</button>
       </div>
 
@@ -45,7 +44,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useApi, formatRWF, statusBadge } from '~/composables/useApi'
 
 const props = defineProps({
@@ -60,9 +59,12 @@ const emit = defineEmits(['navigate'])
 
 const api = useApi()
 const payment = ref(null)
+const pollingInterval = ref(null)
+const isLoading = ref(false)
 
 const isPaid = computed(() => payment.value?.status === 'Paid')
 const isFailed = computed(() => payment.value?.status === 'Failed')
+const isPending = computed(() => payment.value?.status === 'Pending')
 
 const title = computed(() => {
   if (!payment.value) return 'Payment'
@@ -103,54 +105,112 @@ const statusMessage = computed(() => {
   return 'Waiting for MoPay confirmation…'
 })
 
-const simulatePaid = async () => {
-  // In a real app, this would be handled by webhook
-  // For demo, we'll just refresh the payment status
+const checkPaymentStatus = async () => {
+  if (!payment.value?.id) {
+    console.log('No payment ID to check')
+    return
+  }
+  
   try {
+    isLoading.value = true
+    console.log('Checking status for payment ID:', payment.value.id)
     const updated = await api.getPaymentById(payment.value.id)
-    payment.value = updated
-    emit('navigate', 'Payment History')
+    console.log('Payment status updated:', updated)
+    console.log('Current status:', updated?.status)
+    console.log('Is Paid?', updated?.status === 'Paid')
+    
+    if (updated) {
+      payment.value = updated
+      
+      // If payment is confirmed, stop polling and navigate
+      if (updated.status === 'Paid') {
+        console.log('Payment is Paid - stopping polling and navigating')
+        stopPolling()
+        localStorage.removeItem('currentPayment')
+        setTimeout(() => {
+          emit('navigate', 'Payment History')
+        }, 2000)
+      } else if (updated.status === 'Failed' || updated.status === 'Cancelled') {
+        console.log('Payment is Failed or Cancelled - stopping polling')
+        stopPolling()
+      } else {
+        console.log('Payment status:', updated.status, '- continuing to poll')
+      }
+    }
   } catch (error) {
-    console.error('Failed to simulate payment:', error)
+    console.error('Failed to check payment status:', error)
+  } finally {
+    isLoading.value = false
   }
 }
 
-const simulateFailed = async () => {
-  try {
-    await api.cancelPayment(payment.value.id)
-    payment.value.status = 'Failed'
-  } catch (error) {
-    console.error('Failed to cancel payment:', error)
+const startPolling = () => {
+  if (pollingInterval.value) return
+  
+  // Check immediately
+  checkPaymentStatus()
+  
+  // Then poll every 5 seconds
+  pollingInterval.value = setInterval(() => {
+    checkPaymentStatus()
+  }, 5000)
+}
+
+const stopPolling = () => {
+  if (pollingInterval.value) {
+    clearInterval(pollingInterval.value)
+    pollingInterval.value = null
   }
 }
 
 const cancelPayment = async () => {
   try {
+    stopPolling()
     await api.cancelPayment(payment.value.id)
     payment.value.status = 'Cancelled'
+    localStorage.removeItem('currentPayment')
     emit('navigate', 'My Invoices')
   } catch (error) {
     console.error('Failed to cancel payment:', error)
+    alert('Failed to cancel payment: ' + error.message)
   }
 }
 
 const retryPayment = () => {
+  stopPolling()
+  localStorage.removeItem('currentPayment')
   emit('navigate', 'Payment')
   localStorage.setItem('selectedInvoice', JSON.stringify({ id: payment.value.invoice_id }))
 }
 
 const navigateToHistory = () => {
+  stopPolling()
   emit('navigate', 'Payment History')
 }
 
 const navigateToInvoices = () => {
+  stopPolling()
   emit('navigate', 'My Invoices')
 }
 
 onMounted(() => {
   const currentPayment = localStorage.getItem('currentPayment')
   if (currentPayment) {
-    payment.value = JSON.parse(currentPayment)
+    try {
+      payment.value = JSON.parse(currentPayment)
+      
+      // If payment has an ID, start polling for status updates
+      if (payment.value?.id && isPending.value) {
+        startPolling()
+      }
+    } catch (error) {
+      console.error('Failed to parse payment data:', error)
+    }
   }
+})
+
+// Clean up polling when component unmounts
+onUnmounted(() => {
+  stopPolling()
 })
 </script>
