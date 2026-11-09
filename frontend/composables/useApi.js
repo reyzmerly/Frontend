@@ -322,6 +322,7 @@ export function useApi() {
     getProgrammes,
     getSemesters,
     getUsers,
+    createUser,
     getUserById,
     updateUser,
     getAuditLogs,

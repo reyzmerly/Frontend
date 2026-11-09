@@ -85,6 +85,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="modal-overlay" @click.self="showSuccessModal = false">
+      <div class="modal-content modal-success">
+        <div class="modal-body">
+          <div class="success-icon">✓</div>
+          <h2>User Invited Successfully</h2>
+          <p>The new user has been created and can now log in with their credentials.</p>
+          <div class="modal-actions">
+            <button class="button button-primary" @click="showSuccessModal = false">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -109,6 +123,7 @@ const auditLog = ref([])
 const loading = ref(true)
 
 const showInviteModal = ref(false)
+const showSuccessModal = ref(false)
 const inviteForm = ref({
   full_name: '',
   email: '',
@@ -135,6 +150,7 @@ const inviteUser = async () => {
   try {
     await api.createUser(inviteForm.value)
     showInviteModal.value = false
+    showSuccessModal.value = true
     // Reset form
     inviteForm.value = {
       full_name: '',
@@ -142,7 +158,6 @@ const inviteUser = async () => {
       role: '',
       password: ''
     }
-    alert('User invited successfully')
     // Reload users to update metrics
     await loadData()
   } catch (error) {
@@ -251,5 +266,44 @@ onMounted(() => {
 
 .icon-button:hover {
   background: #f3f4f6;
+}
+
+.modal-success {
+  text-align: center;
+  max-width: 400px;
+}
+
+.modal-success .modal-body {
+  padding: 40px 20px;
+}
+
+.success-icon {
+  width: 60px;
+  height: 60px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 auto 20px auto;
+}
+
+.modal-success h2 {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #374151;
+}
+
+.modal-success p {
+  margin: 0 0 20px 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.modal-success .modal-actions {
+  justify-content: center;
 }
 </style>
