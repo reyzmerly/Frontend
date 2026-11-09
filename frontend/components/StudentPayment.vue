@@ -1,0 +1,165 @@
+<template>
+  <div>
+    <header class="page-heading">
+      <div>
+        <p class="dashboard-eyebrow">STUDENT PORTAL / MY INVOICES</p>
+        <h1>Pay invoice</h1>
+        <p class="dashboard-subtitle">Make a full or partial payment through MoPay. Approve it on your phone.</p>
+      </div>
+    </header>
+
+    <div v-if="!invoice">
+      <p>Invoice not found</p>
+      <button class="button button-secondary" @click="navigateToInvoices">Back to invoices</button>
+    </div>
+
+    <div v-else class="payment-layout">
+      <section class="panel-card payment-form-card">
+        <div class="section-heading">
+          <div>
+            <h2>Pay with MoPay</h2>
+            <p>Choose how much you would like to pay.</p>
+          </div>
+          <span class="secure-note">● MoPay protected</span>
+        </div>
+        <div class="invoice-recap">
+          <div><span>Invoice</span><strong>{{ invoice.invoice_number || invoice.id }}</strong></div>
+          <div><span>Description</span><strong>{{ invoice.description }}</strong></div>
+          <div><span>Outstanding balance</span><strong>{{ formatRWF(balance) }}</strong></div>
+        </div>
+        <form @submit.prevent="handleSubmit" class="stacked-form">
+          <label for="payment-amount">Payment amount <span>(RWF)</span></label>
+          <input
+            id="payment-amount"
+            v-model.number="paymentForm.amount"
+            type="number"
+            min="1"
+            :max="balance"
+            required
+          >
+          <small class="field-hint">Allowed: up to {{ formatRWF(balance) }}. Partial payments leave a balance.</small>
+          <label for="mopay-phone">MoPay mobile number</label>
+          <input
+            id="mopay-phone"
+            v-model="paymentForm.phone"
+            type="tel"
+            inputmode="tel"
+            placeholder="+250 78 000 0142"
+            maxlength="18"
+            required
+          >
+          <div class="notice-box">
+            <strong>Confirm only on your phone.</strong>
+            <p>Any applicable gateway fees will be shown by MoPay before approval. Never share your PIN.</p>
+          </div>
+          <button class="button button-primary button-full" type="submit">
+            Continue to MoPay <span>→</span>
+          </button>
+        </form>
+      </section>
+
+      <aside class="panel-card payment-summary">
+        <p class="dashboard-eyebrow">PAYMENT SUMMARY</p>
+        <h2>{{ formatRWF(balance) }}</h2>
+        <p>Outstanding on this invoice</p>
+        <hr>
+        <div><span>Invoice total</span><strong>{{ formatRWF(invoice.total_amount) }}</strong></div>
+        <div><span>Paid so far</span><strong>{{ formatRWF(invoice.paid_amount) }}</strong></div>
+        <div><span>Due date</span><strong>{{ formatDate(invoice.due_date) }}</strong></div>
+      </aside>
+    </div>
+  </div>
+</template>
+
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useApi, formatRWF, formatDate } from '~/composables/useApi'
+
+const props = defineProps({
+  user: Object,
+  currentPage: {
+    type: Object,
+    required: true
+  }
+})
+
+const emit = defineEmits(['navigate'])
+
+const api = useApi()
+const invoice = ref(null)
+const paymentForm = ref({
+  amount: 0,
+  phone: ''
+})
+
+const balance = computed(() => {
+  if (!invoice.value) return 0
+  return invoice.value.balance || (invoice.value.total_amount - invoice.value.paid_amount)
+})
+
+const navigateToInvoices = () => {
+  emit('navigate', 'My Invoices')
+}
+
+const handleSubmit = async () => {
+  try {
+    console.log('=== Payment Submission Started ===')
+    console.log('Invoice:', invoice.value)
+    console.log('Invoice status:', invoice.value.status)
+    console.log('Invoice balance:', invoice.value.balance)
+    console.log('Invoice total_amount:', invoice.value.total_amount)
+    console.log('Invoice paid_amount:', invoice.value.paid_amount)
+    
+    const paymentData = {
+      invoice_id: invoice.value.id,
+      amount: Math.floor(paymentForm.value.amount),
+      phone: paymentForm.value.phone
+    }
+    
+    console.log('Payment data:', paymentData)
+    console.log('Sending payment request to backend...')
+    
+    const response = await api.createPayment(paymentData)
+    console.log('Payment initiation response:', response)
+    
+    // Backend returns 202 Accepted with empty body
+    console.log('Fetching payments list to find new payment')
+    const payments = await api.getPayments()
+    console.log('Payments list length:', payments.length)
+    
+    // Find the most recent payment for this invoice
+    const invoicePayments = payments.filter(p => p.invoice_id === invoice.value.id)
+    console.log('Payments for this invoice:', invoicePayments)
+    
+    // Sort by created_at descending to get the latest
+    const latestPayment = invoicePayments.sort((a, b) => 
+      new Date(b.created_at) - new Date(a.created_at)
+    )[0]
+    
+    console.log('Latest payment:', latestPayment)
+    
+    if (latestPayment) {
+      emit('navigate', 'Payment Status')
+      localStorage.setItem('currentPayment', JSON.stringify(latestPayment))
+    } else {
+      alert('Payment initiated but could not retrieve payment details. Please check payment history.')
+      emit('navigate', 'Payment History')
+    }
+  } catch (error) {
+    console.error('=== Payment Failed ===')
+    console.error('Error:', error)
+    console.error('Error message:', error.message)
+    console.error('Error details:', JSON.stringify(error, null, 2))
+    alert('Payment failed: ' + error.message)
+  }
+}
+
+onMounted(() => {
+  const selectedInvoice = localStorage.getItem('selectedInvoice')
+  if (selectedInvoice) {
+    invoice.value = JSON.parse(selectedInvoice)
+    paymentForm.value.amount = balance.value
+  }
+})
+</script>
