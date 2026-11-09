@@ -97,7 +97,7 @@
             <tr v-if="filteredInvoices.length === 0">
               <td colspan="7" class="empty-state">No invoices match your search.</td>
             </tr>
-            <tr v-for="invoice in filteredInvoices" :key="invoice.id">
+            <tr v-for="invoice in filteredInvoices" :key="invoice.id" class="clickable-row" @click="showInvoiceDetails(invoice)">
               <td>
                 <strong>{{ invoice.invoice_number || invoice.id }}</strong>
                 <small>Issued {{ formatDate(invoice.created_at) }}</small>
@@ -115,8 +115,15 @@
           </tbody>
         </table>
       </div>
-      <p class="panel-footnote">Drafts and issued totals are separate. A payment remains read-only until MoPay confirms it.</p>
+      <p class="panel-footnote">Drafts and issued totals are separate. A payment remains read-only until MoPay confirms it. Click on a row to view details.</p>
     </section>
+
+    <InvoiceDetails
+      v-if="selectedInvoice"
+      :invoice="selectedInvoice"
+      :user="user"
+      @close="selectedInvoice = null"
+    />
   </div>
 </template>
 
@@ -124,6 +131,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useApi, formatRWF, formatDate, statusBadge } from '~/composables/useApi'
+import InvoiceDetails from './InvoiceDetails.vue'
 
 const props = defineProps({
   user: Object,
@@ -139,6 +147,7 @@ const api = useApi()
 const invoices = ref([])
 const students = ref([])
 const feeTypes = ref([])
+const selectedInvoice = ref(null)
 const loading = ref(true)
 
 const showCreateForm = ref(false)
@@ -171,6 +180,16 @@ const filteredInvoices = computed(() => {
     return matchesSearch && matchesStatus
   })
 })
+
+const showInvoiceDetails = async (invoice) => {
+  try {
+    const fullInvoice = await api.getInvoiceById(invoice.id)
+    selectedInvoice.value = fullInvoice
+  } catch (error) {
+    console.error('Failed to load invoice details:', error)
+    alert('Failed to load invoice details')
+  }
+}
 
 const handleCreateInvoice = async () => {
   try {
@@ -230,3 +249,14 @@ onMounted(() => {
   loadData()
 })
 </script>
+
+<style scoped>
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+  background-color: #f9fafb;
+}
+</style>

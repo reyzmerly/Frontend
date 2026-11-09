@@ -51,7 +51,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="invoice in invoices" :key="invoice.id">
+            <tr v-for="invoice in invoices" :key="invoice.id" class="clickable-row" @click="showInvoiceDetails(invoice)">
               <td>
                 <strong>{{ invoice.invoice_number || invoice.id }}</strong>
                 <small>Issued {{ formatDate(invoice.created_at) }}</small>
@@ -61,7 +61,7 @@
               <td><strong>{{ formatRWF(invoice.balance) }}</strong></td>
               <td>{{ formatDate(invoice.due_date) }}</td>
               <td v-html="statusBadge(invoice.status)"></td>
-              <td>
+              <td @click.stop>
                 <button
                   v-if="invoice.balance > 0"
                   class="button button-primary button-small"
@@ -81,8 +81,16 @@
           </tbody>
         </table>
       </div>
-      <p class="panel-footnote">Payments are confirmed on your phone. Never share your MoPay PIN.</p>
+      <p class="panel-footnote">Payments are confirmed on your phone. Never share your MoPay PIN. Click on a row to view details.</p>
     </section>
+
+    <InvoiceDetails
+      v-if="selectedInvoice"
+      :invoice="selectedInvoice"
+      :user="user"
+      @close="selectedInvoice = null"
+      @navigate="handleNavigate"
+    />
   </div>
 </template>
 
@@ -90,6 +98,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useApi, formatRWF, formatDate, statusBadge } from '~/composables/useApi'
+import InvoiceDetails from './InvoiceDetails.vue'
 
 const props = defineProps({
   user: Object,
@@ -103,6 +112,7 @@ const emit = defineEmits(['navigate'])
 
 const api = useApi()
 const invoices = ref([])
+const selectedInvoice = ref(null)
 const loading = ref(true)
 
 const outstanding = computed(() => {
@@ -116,6 +126,23 @@ const outstandingTotal = computed(() => {
 const paidCount = computed(() => {
   return invoices.value.filter(invoice => invoice.status === 'Paid').length
 })
+
+const showInvoiceDetails = async (invoice) => {
+  console.log('Showing invoice details for:', invoice)
+  try {
+    const fullInvoice = await api.getInvoiceById(invoice.id)
+    console.log('Full invoice from API:', fullInvoice)
+    selectedInvoice.value = fullInvoice
+    console.log('selectedInvoice set to:', selectedInvoice.value)
+  } catch (error) {
+    console.error('Failed to load invoice details:', error)
+    alert('Failed to load invoice details: ' + error.message)
+  }
+}
+
+const handleNavigate = (page) => {
+  emit('navigate', page)
+}
 
 const initiatePayment = (invoice) => {
   emit('navigate', 'Payment')
@@ -146,3 +173,14 @@ onMounted(() => {
   loadInvoices()
 })
 </script>
+
+<style scoped>
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.clickable-row:hover {
+  background-color: #f9fafb;
+}
+</style>

@@ -87,7 +87,8 @@ export function useApi() {
 
   const getInvoiceById = async (invoiceId) => {
     const response = await apiCall(`/invoices/${invoiceId}`)
-    return response.data
+    // Single object endpoints return data directly, not wrapped in { data: ... }
+    return response.data || response
   }
 
   const createInvoice = async (invoiceData) => {
