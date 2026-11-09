@@ -99,17 +99,18 @@ export function useApi() {
     return response.data
   }
 
+  const issueInvoice = async (invoiceId) => {
+    const response = await apiCall(`/invoices/${invoiceId}/issue`, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'issue' })
+    })
+    return response.data || response
+  }
+
   const updateInvoice = async (invoiceId, invoiceData) => {
     const response = await apiCall(`/invoices/${invoiceId}`, {
       method: 'PUT',
       body: JSON.stringify(invoiceData)
-    })
-    return response.data
-  }
-
-  const issueInvoice = async (invoiceId) => {
-    const response = await apiCall(`/invoices/${invoiceId}/issue`, {
-      method: 'POST'
     })
     return response.data
   }

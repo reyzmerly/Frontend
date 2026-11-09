@@ -30,17 +30,31 @@
           </select>
         </label>
         <label>
-          Fee type
-          <select v-model="createForm.fee_type_id" required>
-            <option value="">Select fee type</option>
-            <option v-for="fee in activeFeeTypes" :key="fee.id" :value="fee.id">
-              {{ fee.name }} · {{ formatRWF(fee.amount) }}
+          Programme
+          <select v-model="createForm.programme_id" required>
+            <option value="">Select programme</option>
+            <option v-for="programme in programmes" :key="programme.id" :value="programme.id">
+              {{ programme.name }}
             </option>
           </select>
         </label>
         <label>
-          Invoice description
-          <input v-model="createForm.description" placeholder="e.g. Tuition Fees — Semester II" required>
+          Semester
+          <select v-model="createForm.semester_id" required>
+            <option value="">Select semester</option>
+            <option v-for="semester in semesters" :key="semester.id" :value="semester.id">
+              {{ semester.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Fee type
+          <select v-model="createForm.fee_type_id" required>
+            <option value="">Select fee type</option>
+            <option v-for="fee in feeTypes" :key="fee.id" :value="fee.id">
+              {{ fee.name }} · {{ formatRWF(fee.amount) }}
+            </option>
+          </select>
         </label>
         <label>
           Amount (RWF)
@@ -50,8 +64,19 @@
           Due date
           <input v-model="createForm.due_date" type="date" required>
         </label>
+        <label>
+          Invoice description
+          <input v-model="createForm.description" placeholder="e.g. Tuition Fees — Semester II">
+        </label>
+        <label>
+          Action
+          <select v-model="createForm.action">
+            <option value="draft">Save as Draft</option>
+            <option value="issue">Issue immediately</option>
+          </select>
+        </label>
         <div class="form-actions">
-          <button class="button button-primary" type="submit">Issue invoice</button>
+          <button class="button button-primary" type="submit">Create invoice</button>
           <button class="button button-secondary" type="button" @click="showCreateForm = false">Cancel</button>
         </div>
       </form>
@@ -111,6 +136,15 @@
               <td><strong>{{ formatRWF(invoice.balance || (invoice.total_amount - invoice.paid_amount)) }}</strong></td>
               <td>{{ formatDate(invoice.due_date) }}</td>
               <td v-html="statusBadge(invoice.status)"></td>
+              <td @click.stop>
+                <button
+                  v-if="invoice.status === 'Draft'"
+                  class="button button-primary button-small"
+                  @click="issueInvoice(invoice)"
+                >
+                  Issue
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -147,6 +181,8 @@ const api = useApi()
 const invoices = ref([])
 const students = ref([])
 const feeTypes = ref([])
+const programmes = ref([])
+const semesters = ref([])
 const selectedInvoice = ref(null)
 const loading = ref(true)
 
@@ -156,14 +192,13 @@ const statusFilter = ref('')
 
 const createForm = ref({
   student_id: '',
+  programme_id: '',
+  semester_id: '',
   fee_type_id: '',
-  description: '',
   amount: 0,
-  due_date: ''
-})
-
-const activeFeeTypes = computed(() => {
-  return feeTypes.value.filter(fee => fee.active !== false)
+  due_date: '',
+  description: '',
+  action: 'draft'
 })
 
 const filteredInvoices = computed(() => {
@@ -191,14 +226,28 @@ const showInvoiceDetails = async (invoice) => {
   }
 }
 
+const issueInvoice = async (invoice) => {
+  try {
+    await api.issueInvoice(invoice.id)
+    await loadInvoices()
+  } catch (error) {
+    console.error('Failed to issue invoice:', error)
+    alert('Failed to issue invoice: ' + error.message)
+  }
+}
+
 const handleCreateInvoice = async () => {
   try {
     const invoiceData = {
       student_id: createForm.value.student_id,
-      fee_type_id: createForm.value.fee_type_id,
-      description: createForm.value.description,
-      total_amount: createForm.value.amount,
-      due_date: createForm.value.due_date
+      programme_id: createForm.value.programme_id,
+      semester_id: createForm.value.semester_id,
+      due_date: createForm.value.due_date,
+      items: [{
+        fee_type_id: createForm.value.fee_type_id,
+        amount: createForm.value.amount
+      }],
+      action: createForm.value.action
     }
 
     await api.createInvoice(invoiceData)
@@ -206,10 +255,13 @@ const handleCreateInvoice = async () => {
     // Reset form
     createForm.value = {
       student_id: '',
+      programme_id: '',
+      semester_id: '',
       fee_type_id: '',
-      description: '',
       amount: 0,
-      due_date: ''
+      due_date: '',
+      description: '',
+      action: 'draft'
     }
     // Reload invoices
     await loadInvoices()
@@ -230,14 +282,18 @@ const loadInvoices = async () => {
 const loadData = async () => {
   try {
     loading.value = true
-    const [invoicesData, studentsData, feeTypesData] = await Promise.all([
+    const [invoicesData, studentsData, feeTypesData, programmesData, semestersData] = await Promise.all([
       api.getInvoices(),
       api.getStudents(),
-      api.getFeeTypes()
+      api.getFeeTypes(),
+      api.getProgrammes(),
+      api.getSemesters()
     ])
     invoices.value = invoicesData || []
     students.value = studentsData || []
     feeTypes.value = feeTypesData || []
+    programmes.value = programmesData || []
+    semesters.value = semestersData || []
   } catch (error) {
     console.error('Failed to load finance invoices data:', error)
   } finally {
