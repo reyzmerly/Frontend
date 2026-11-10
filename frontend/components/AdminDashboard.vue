@@ -8,7 +8,7 @@
       </div>
     </header>
 
-    <section class="metric-grid metric-grid-4">
+    <section class="metric-grid metric-grid-5">
       <article class="metric-card">
         <span class="metric-icon icon-burgundy">▤</span>
         <p>Total users</p>
@@ -28,10 +28,16 @@
         <small>{{ invoices.length }} invoices</small>
       </article>
       <article class="metric-card">
+        <span class="metric-icon icon-blue">₣</span>
+        <p>Total paid</p>
+        <strong>{{ formatRWF(totalPaid) }}</strong>
+        <small>Collected payments</small>
+      </article>
+      <article class="metric-card">
         <span class="metric-icon icon-gold">◷</span>
-        <p>Audit events</p>
-        <strong>{{ auditLog.length }}</strong>
-        <small>Recorded activities</small>
+        <p>Outstanding</p>
+        <strong>{{ formatRWF(totalOutstanding) }}</strong>
+        <small>Unpaid balance</small>
       </article>
     </section>
 
@@ -48,6 +54,9 @@
         </button>
         <button class="button button-secondary" @click="navigateTo('Audit Log')">
           View audit log
+        </button>
+        <button class="button button-secondary" @click="exportReport">
+          Export report
         </button>
         <button class="button button-primary" @click="showInviteModal = true">
           Invite new user
@@ -140,6 +149,7 @@ const users = ref([])
 const auditLog = ref([])
 const programmes = ref([])
 const invoices = ref([])
+const payments = ref([])
 const loading = ref(true)
 
 const showInviteModal = ref(false)
@@ -177,8 +187,35 @@ const totalInvoiced = computed(() => {
   return invoices.value.reduce((sum, invoice) => sum + invoice.total_amount, 0)
 })
 
+const totalPaid = computed(() => {
+  return payments.value
+    .filter(payment => payment.status === 'Paid')
+    .reduce((sum, payment) => sum + payment.amount, 0)
+})
+
+const totalOutstanding = computed(() => {
+  return invoices.value.reduce((sum, invoice) => sum + (invoice.balance || 0), 0)
+})
+
 const navigateTo = (page) => {
   emit('navigate', page)
+}
+
+const exportReport = async () => {
+  try {
+    const blob = await api.exportFinanceReport('pdf')
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'financial-report.pdf'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (error) {
+    console.error('Failed to export report:', error)
+    alert('Failed to export report: ' + error.message)
+  }
 }
 
 const handleRoleChange = () => {
@@ -227,16 +264,18 @@ const inviteUser = async () => {
 const loadData = async () => {
   try {
     loading.value = true
-    const [usersData, auditData, programmesData, invoicesData] = await Promise.all([
+    const [usersData, auditData, programmesData, invoicesData, paymentsData] = await Promise.all([
       api.getUsers(),
       api.getAuditLogs(),
       api.getProgrammes(),
-      api.getInvoices()
+      api.getInvoices(),
+      api.getPayments()
     ])
     users.value = usersData || []
     auditLog.value = auditData || []
     programmes.value = programmesData || []
     invoices.value = invoicesData || []
+    payments.value = paymentsData || []
   } catch (error) {
     console.error('Failed to load admin dashboard data:', error)
   } finally {
@@ -250,8 +289,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.metric-grid-4 {
-  grid-template-columns: repeat(4, 1fr);
+.metric-grid-5 {
+  grid-template-columns: repeat(5, 1fr);
 }
 
 .action-grid {
