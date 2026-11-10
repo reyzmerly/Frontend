@@ -122,7 +122,7 @@ import { useApi } from '~/composables/useApi'
 const props = defineProps({
   user: Object,
   currentPage: {
-    type: Object,
+    type: String,
     required: true
   }
 })
