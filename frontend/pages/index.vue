@@ -52,7 +52,7 @@
             Your role determines your workspace. Students see only their own records; staff access is authorized.
           </p>
           <button type="button" class="forgot-password">Forgot password?</button>
-          <p class="demo-credentials">Demo accounts: student, finance or admin · password: 123</p>
+          <p class="demo-credentials">Demo accounts: student, finance or admin · password: password123</p>
         </form>
       </section>
     </div>
@@ -278,12 +278,7 @@ const handleLogout = () => {
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
-    try {
-      user.value = JSON.parse(storedUser)
-    } catch (e) {
-      localStorage.removeItem('user')
-      localStorage.removeItem('token')
-    }
+    user.value = JSON.parse(storedUser)
   }
 })
 </script>

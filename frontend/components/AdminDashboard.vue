@@ -55,8 +55,11 @@
         <button class="button button-secondary" @click="navigateTo('Audit Log')">
           View audit log
         </button>
-        <button class="button button-secondary" @click="exportReport">
-          Export report
+        <button class="button button-secondary" @click="exportReport('pdf')">
+          Export PDF
+        </button>
+        <button class="button button-secondary" @click="exportReport('csv')">
+          Export CSV
         </button>
         <button class="button button-primary" @click="showInviteModal = true">
           Invite new user
@@ -201,13 +204,13 @@ const navigateTo = (page) => {
   emit('navigate', page)
 }
 
-const exportReport = async () => {
+const exportReport = async (format) => {
   try {
-    const blob = await api.exportFinanceReport('pdf')
+    const blob = await api.exportFinanceReport(format)
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'financial-report.pdf'
+    a.download = `financial-report.${format}`
     document.body.appendChild(a)
     a.click()
     window.URL.revokeObjectURL(url)
