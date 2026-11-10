@@ -278,7 +278,12 @@ const handleLogout = () => {
 onMounted(() => {
   const storedUser = localStorage.getItem('user')
   if (storedUser) {
-    user.value = JSON.parse(storedUser)
+    try {
+      user.value = JSON.parse(storedUser)
+    } catch (e) {
+      localStorage.removeItem('user')
+      localStorage.removeItem('token')
+    }
   }
 })
 </script>
