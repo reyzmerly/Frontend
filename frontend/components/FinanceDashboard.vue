@@ -80,6 +80,14 @@
           <h2>Recent MoPay payments</h2>
           <p>Latest gateway activity</p>
         </div>
+        <div class="action-buttons">
+          <button class="button button-secondary" @click="exportReport('pdf')">
+            Export PDF
+          </button>
+          <button class="button button-secondary" @click="exportReport('csv')">
+            Export CSV
+          </button>
+        </div>
       </div>
       <div class="table-scroll">
         <table class="data-table">
@@ -176,6 +184,23 @@ const recentPayments = computed(() => {
 
 const getStatusCount = (status) => {
   return invoices.value.filter(invoice => invoice.status === status).length
+}
+
+const exportReport = async (format) => {
+  try {
+    const blob = await api.exportFinanceReport(format)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `financial-report.${format}`
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+  } catch (error) {
+    console.error('Failed to export report:', error)
+    alert('Failed to export report: ' + error.message)
+  }
 }
 
 const loadData = async () => {
