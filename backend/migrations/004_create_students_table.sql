@@ -1,0 +1,8 @@
+CREATE TABLE students (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL UNIQUE,
+  student_number VARCHAR(30) NOT NULL UNIQUE,
+  programme_id BIGINT UNSIGNED NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  FOREIGN KEY (programme_id) REFERENCES programmes(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

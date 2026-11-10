@@ -1,0 +1,22 @@
+CREATE TABLE invoices (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  invoice_number VARCHAR(20) NOT NULL UNIQUE,
+  student_id BIGINT UNSIGNED NOT NULL,
+  programme_id BIGINT UNSIGNED NOT NULL,
+  semester_id BIGINT UNSIGNED NOT NULL,
+  due_date DATE NOT NULL,
+  status ENUM('Draft','Issued','Partially Paid','Paid','Overdue') NOT NULL DEFAULT 'Draft',
+  total_amount BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  paid_amount  BIGINT UNSIGNED NOT NULL DEFAULT 0,
+  issued_at DATETIME NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES students(id),
+  FOREIGN KEY (programme_id) REFERENCES programmes(id),
+  FOREIGN KEY (semester_id) REFERENCES semesters(id),
+  FOREIGN KEY (created_by) REFERENCES users(id),
+  INDEX idx_inv_student (student_id, status),
+  INDEX idx_inv_due (due_date, status),
+  CHECK (paid_amount <= total_amount)
+) ENGINE=InnoDB;

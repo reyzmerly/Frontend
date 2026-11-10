@@ -1,0 +1,9 @@
+CREATE TABLE invoice_items (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  invoice_id BIGINT UNSIGNED NOT NULL,
+  fee_type_id BIGINT UNSIGNED NOT NULL,
+  description VARCHAR(100) NOT NULL,
+  amount BIGINT UNSIGNED NOT NULL,
+  FOREIGN KEY (invoice_id) REFERENCES invoices(id),
+  FOREIGN KEY (fee_type_id) REFERENCES fee_types(id)
+) ENGINE=InnoDB;
