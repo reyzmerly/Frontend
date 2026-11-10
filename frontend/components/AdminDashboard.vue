@@ -67,11 +67,24 @@
           </label>
           <label>
             Role
-            <select v-model="inviteForm.role" required>
+            <select v-model="inviteForm.role" required @change="handleRoleChange">
               <option value="">Select role</option>
               <option value="student">Student</option>
               <option value="finance">Finance</option>
               <option value="admin">Administrator</option>
+            </select>
+          </label>
+          <label v-if="inviteForm.role === 'student'">
+            Student number
+            <input v-model="inviteForm.student_number" type="text" placeholder="e.g. UOK/2024/0001" required>
+          </label>
+          <label v-if="inviteForm.role === 'student'">
+            Programme
+            <select v-model="inviteForm.programme_id" required>
+              <option value="">Select programme</option>
+              <option v-for="programme in programmes" :key="programme.id" :value="programme.id">
+                {{ programme.name }}
+              </option>
             </select>
           </label>
           <label>
@@ -119,6 +132,7 @@ const emit = defineEmits(['navigate'])
 const api = useApi()
 const users = ref([])
 const auditLog = ref([])
+const programmes = ref([])
 const loading = ref(true)
 
 const showInviteModal = ref(false)
@@ -127,14 +141,25 @@ const inviteForm = ref({
   full_name: '',
   email: '',
   role: '',
-  password: ''
+  password: '',
+  student_number: '',
+  programme_id: ''
 })
 
 const isInviteFormValid = computed(() => {
-  return inviteForm.value.full_name.trim() &&
-         inviteForm.value.email.trim() &&
-         inviteForm.value.role &&
-         inviteForm.value.password.length >= 8
+  const baseValid = inviteForm.value.full_name.trim() &&
+                    inviteForm.value.email.trim() &&
+                    inviteForm.value.role &&
+                    inviteForm.value.password.length >= 8
+
+  if (!baseValid) return false
+
+  // For students, require student_number and programme_id
+  if (inviteForm.value.role === 'student') {
+    return inviteForm.value.student_number.trim() && inviteForm.value.programme_id
+  }
+
+  return true
 })
 
 const activeUsers = computed(() => {
@@ -145,9 +170,30 @@ const navigateTo = (page) => {
   emit('navigate', page)
 }
 
+const handleRoleChange = () => {
+  // Clear student-specific fields when role changes
+  if (inviteForm.value.role !== 'student') {
+    inviteForm.value.student_number = ''
+    inviteForm.value.programme_id = ''
+  }
+}
+
 const inviteUser = async () => {
   try {
-    await api.createUser(inviteForm.value)
+    const userData = {
+      full_name: inviteForm.value.full_name,
+      email: inviteForm.value.email,
+      role: inviteForm.value.role,
+      password: inviteForm.value.password
+    }
+
+    // Add student-specific fields if role is student
+    if (inviteForm.value.role === 'student') {
+      userData.student_number = inviteForm.value.student_number
+      userData.programme_id = inviteForm.value.programme_id
+    }
+
+    await api.createUser(userData)
     showInviteModal.value = false
     showSuccessModal.value = true
     // Reset form
@@ -155,7 +201,9 @@ const inviteUser = async () => {
       full_name: '',
       email: '',
       role: '',
-      password: ''
+      password: '',
+      student_number: '',
+      programme_id: ''
     }
     // Reload users to update metrics
     await loadData()
@@ -168,12 +216,14 @@ const inviteUser = async () => {
 const loadData = async () => {
   try {
     loading.value = true
-    const [usersData, auditData] = await Promise.all([
+    const [usersData, auditData, programmesData] = await Promise.all([
       api.getUsers(),
-      api.getAuditLogs()
+      api.getAuditLogs(),
+      api.getProgrammes()
     ])
     users.value = usersData || []
     auditLog.value = auditData || []
+    programmes.value = programmesData || []
   } catch (error) {
     console.error('Failed to load admin dashboard data:', error)
   } finally {

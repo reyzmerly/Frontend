@@ -1,0 +1,13 @@
+CREATE TABLE fee_types (
+  id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  programme_id BIGINT UNSIGNED NOT NULL,
+  semester_id BIGINT UNSIGNED NOT NULL,
+  amount BIGINT UNSIGNED NOT NULL,
+  effective_from DATE NOT NULL,
+  created_by BIGINT UNSIGNED NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (programme_id) REFERENCES programmes(id),
+  FOREIGN KEY (semester_id) REFERENCES semesters(id),
+  FOREIGN KEY (created_by) REFERENCES users(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
