@@ -8,7 +8,7 @@
       </div>
     </header>
 
-    <section class="metric-grid metric-grid-3">
+    <section class="metric-grid metric-grid-4">
       <article class="metric-card">
         <span class="metric-icon icon-burgundy">▤</span>
         <p>Total users</p>
@@ -20,6 +20,12 @@
         <p>Active accounts</p>
         <strong>{{ activeUsers }}</strong>
         <small>Currently active</small>
+      </article>
+      <article class="metric-card">
+        <span class="metric-icon icon-slate">♙</span>
+        <p>Total invoiced</p>
+        <strong>{{ formatRWF(totalInvoiced) }}</strong>
+        <small>{{ invoices.length }} invoices</small>
       </article>
       <article class="metric-card">
         <span class="metric-icon icon-gold">◷</span>
@@ -117,7 +123,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useApi } from '~/composables/useApi'
+import { useApi, formatRWF } from '~/composables/useApi'
 
 const props = defineProps({
   user: Object,
@@ -133,6 +139,7 @@ const api = useApi()
 const users = ref([])
 const auditLog = ref([])
 const programmes = ref([])
+const invoices = ref([])
 const loading = ref(true)
 
 const showInviteModal = ref(false)
@@ -164,6 +171,10 @@ const isInviteFormValid = computed(() => {
 
 const activeUsers = computed(() => {
   return users.value.filter(user => user.access_status === 'active').length
+})
+
+const totalInvoiced = computed(() => {
+  return invoices.value.reduce((sum, invoice) => sum + invoice.total_amount, 0)
 })
 
 const navigateTo = (page) => {
@@ -216,14 +227,16 @@ const inviteUser = async () => {
 const loadData = async () => {
   try {
     loading.value = true
-    const [usersData, auditData, programmesData] = await Promise.all([
+    const [usersData, auditData, programmesData, invoicesData] = await Promise.all([
       api.getUsers(),
       api.getAuditLogs(),
-      api.getProgrammes()
+      api.getProgrammes(),
+      api.getInvoices()
     ])
     users.value = usersData || []
     auditLog.value = auditData || []
     programmes.value = programmesData || []
+    invoices.value = invoicesData || []
   } catch (error) {
     console.error('Failed to load admin dashboard data:', error)
   } finally {
@@ -237,6 +250,10 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.metric-grid-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .action-grid {
   display: flex;
   gap: 12px;
